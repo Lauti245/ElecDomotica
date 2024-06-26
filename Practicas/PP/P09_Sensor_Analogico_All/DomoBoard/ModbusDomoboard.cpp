@@ -1,0 +1,290 @@
+CREATE OR REPLACE PACKAGE BODY LIFEFIT.BASE AS
+    PROCEDURE LLAMADA_ERROR_CREACION(p_msg IN VARCHAR2) IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('EXCEPCION_CREACION: ' || p_msg);
+        RAISE EXCEPCION_CREACION;
+    END LLAMADA_ERROR_CREACION;
+
+    PROCEDURE LLAMADA_ERROR_MODIFICACION(p_msg IN VARCHAR2) IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('EXCEPCION_MODIFICACION: ' || p_msg);
+        RAISE EXCEPCION_MODIFICACION;
+    END LLAMADA_ERROR_MODIFICACION;
+
+    PROCEDURE LLAMADA_ERROR_ELIMINACION(p_msg IN VARCHAR2) IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('EXCEPCION_ELIMINACION: ' || p_msg);
+        RAISE EXCEPCION_ELIMINACION;
+    END LLAMADA_ERROR_ELIMINACION;
+
+    PROCEDURE LLAMADA_ERROR_LECTURA(p_msg IN VARCHAR2) IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('EXCEPCION_LECTURA: ' || p_msg);
+        RAISE EXCEPCION_LECTURA;
+    END LLAMADA_ERROR_LECTURA;
+
+     PROCEDURE CREA_CLIENTE(
+        P_DATOS IN TCLIENTE,
+        P_USERPASS IN VARCHAR2,
+        P_USUARIO OUT LIFEFIT.USUARIO%ROWTYPE,
+        P_CLIENTE OUT LIFEFIT.CLIENTE%ROWTYPE
+    ) IS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        v_savepoint_name VARCHAR2(50) := 'SAVEPOINT_CREACION_CLIENTE';
+    BEGIN
+        SAVEPOINT v_savepoint_name;
+
+        -- Insertar en la tabla USUARIO
+        INSERT INTO LIFEFIT.USUARIO (NOMBRE, APELLIDOS, TELEFONO, DIRECCION, CORREOE)
+        VALUES (P_DATOS.NOMBRE, P_DATOS.APELLIDOS, P_DATOS.TELEFONO, P_DATOS.DIRECCION, P_DATOS.CORREOE)
+        RETURNING NOMBRE, APELLIDOS, TELEFONO, DIRECCION, CORREOE INTO P_USUARIO.NOMBRE, P_USUARIO.APELLIDOS, P_USUARIO.TELEFONO, P_USUARIO.DIRECCION, P_USUARIO.CORREOE ;
+
+        -- Insertar en la tabla CLIENTE
+        INSERT INTO LIFEFIT.CLIENTE (CLIENTE_ID, OBJETIVO, DIETA_ID, PREFERENCIAS, CENTRO_ID)
+        VALUES (P_USUARIO.ID, P_DATOS.OBJETIVOS, P_DATOS.DIETA, P_DATOS.PREFERENCIAS, P_DATOS.CENTRO_ID)
+        RETURNING ID, OBJETIVO, DIETA_ID, PREFERENCIAS, CENTRO_ID INTO P_CLIENTE.CLIENTE_ID, P_CLIENTE.OBJETIVO, P_CLIENTE.DIETA_ID, P_CLIENTE.PREFERENCIAS, P_CLIENTE.CENTRO_ID;
+
+        -- Crear el usuario en la base de datos
+        EXECUTE IMMEDIATE 'CREATE USER ' || P_USUARIO.NOMBRE || ' IDENTIFIED BY ' || P_USERPASS;
+        EXECUTE IMMEDIATE 'GRANT CONNECT TO ' || P_USUARIO.NOMBRE;
+
+        -- Otros permisos y objetos
+        -- ...
+
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK TO v_savepoint_name;
+            LLAMADA_ERROR_CREACION('Error al crear cliente: ' || SQLERRM);
+    END CREA_CLIENTE;
+    
+    
+    PROCEDURE CREA_ENTRENADOR(
+        P_DATOS IN TENTRENADOR,
+        P_USERPASS IN VARCHAR2,
+        P_USUARIO OUT LIFEFIT.USUARIO%ROWTYPE,
+        P_ENTRENADOR OUT LIFEFIT.ENTRENADOR%ROWTYPE
+    ) IS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        v_savepoint_name VARCHAR2(50) := 'SAVEPOINT_CREACION_ENTRENADOR';
+    BEGIN
+        SAVEPOINT v_savepoint_name;
+
+        -- Insertar en la tabla USUARIO
+            -- Insertar en la tabla USUARIO
+        INSERT INTO LIFEFIT.USUARIO (NOMBRE, APELLIDOS, TELEFONO, DIRECCION, CORREOE)
+        VALUES (P_DATOS.NOMBRE, P_DATOS.APELLIDOS, P_DATOS.TELEFONO, P_DATOS.DIRECCION, P_DATOS.CORREOE)
+        RETURNING NOMBRE, APELLIDOS, TELEFONO, DIRECCION, CORREOE INTO P_USUARIO.NOMBRE, P_USUARIO.APELLIDOS, P_USUARIO.TELEFONO, P_USUARIO.DIRECCION, P_USUARIO.CORREOE ;
+
+        -- Insertar en la tabla ENTRENADOR
+        INSERT INTO LIFEFIT.ENTRENADOR (ID, DISPONIBILIDAD, CENTRO_ID)
+        VALUES (P_USUARIO.ID, P_DATOS.DISPONIBILIDAD, P_DATOS.CENTRO)
+        RETURNING ID, DISPONIBILIDAD, CENTRO_ID INTO P_ENTRENADOR.ID, P_ENTRENADOR.DISPONIBILIDAD, P_ENTRENADOR.CENTRO_ID;
+
+        -- Crear el usuario en la base de datos
+        EXECUTE IMMEDIATE 'CREATE USER ' || P_USUARIO.NOMBRE || ' IDENTIFIED BY ' || P_USERPASS;
+        EXECUTE IMMEDIATE 'GRANT CONNECT TO ' || P_USUARIO.NOMBRE;
+
+        -- Otros permisos y objetos
+        -- ...
+
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK TO v_savepoint_name;
+            LLAMADA_ERROR_CREACION('Error al crear entrenador: ' || SQLERRM);
+    END CREA_ENTRENADOR;
+
+
+PROCEDURE CREA_GERENTE(
+        P_DATOS IN TGERENTE,
+        P_USERPASS IN VARCHAR2,
+        P_USUARIO OUT LIFEFIT.USUARIO%ROWTYPE,
+        P_GERENTE OUT LIFEFIT.GERENTE%ROWTYPE
+    ) IS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        v_savepoint_name VARCHAR2(50) := 'SAVEPOINT_CREACION_GERENTE';
+    BEGIN
+        SAVEPOINT v_savepoint_name;
+
+        -- Insertar en la tabla USUARIO
+             -- Insertar en la tabla USUARIO
+        INSERT INTO LIFEFIT.USUARIO (NOMBRE, APELLIDOS, TELEFONO, DIRECCION, CORREOE)
+        VALUES (P_DATOS.NOMBRE, P_DATOS.APELLIDOS, P_DATOS.TELEFONO, P_DATOS.DIRECCION, P_DATOS.CORREOE)
+        RETURNING NOMBRE, APELLIDOS, TELEFONO, DIRECCION, CORREOE INTO P_USUARIO.NOMBRE, P_USUARIO.APELLIDOS, P_USUARIO.TELEFONO, P_USUARIO.DIRECCION, P_USUARIO.CORREOE ;
+
+        -- Insertar en la tabla GERENTE
+        INSERT INTO LIFEFIT.GERENTE (ID, DESPACHO, HORARIO, CENTRO_ID)
+        VALUES (P_USUARIO.ID, P_DATOS.DESPACHO, P_DATOS.HORARIO, P_DATOS.CENTRO)
+        RETURNING ID, DESPACHO, HORARIO, CENTRO INTO P_GERENTE.ID, P_GERENTE.DESPACHO, P_GERENTE.HORARIO, P_GERENTE.CENTRO_ID ;
+
+        -- Crear el usuario en la base de datos
+        EXECUTE IMMEDIATE 'CREATE USER ' || P_USUARIO.NOMBRE || ' IDENTIFIED BY ' || P_USERPASS;
+        EXECUTE IMMEDIATE 'GRANT CONNECT TO ' || P_USUARIO.NOMBRE;
+
+        -- Otros permisos y objetos
+        -- ...
+
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK TO v_savepoint_name; 
+            LLAMADA_ERROR_CREACION('Error al crear gerente: ' || SQLERRM);
+END CREA_GERENTE;
+
+
+
+PROCEDURE ELIMINA_USER(P_ID LIFEFIT.USUARIO.ID%TYPE) AS
+    v_UsuarioOracle LIFEFIT.USUARIO.UsuarioOracle%TYPE;
+BEGIN
+    -- Obtener el UsuarioOracle del usuario con el ID proporcionado
+    SELECT UsuarioOracle INTO v_UsuarioOracle
+    FROM LIFEFIT.USUARIO
+    WHERE ID = P_ID;
+
+    -- Verificar si el usuario tiene un UsuarioOracle asignado
+    IF v_UsuarioOracle IS NOT NULL THEN
+        -- Intentar eliminar la infraestructura de conexión asociada con el UsuarioOracle
+        BEGIN
+            EXECUTE IMMEDIATE 'DROP USER ' || v_UsuarioOracle || ' CASCADE';
+        EXCEPTION
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('Error al eliminar el usuario Oracle: ' || SQLERRM);
+                RAISE;
+        END;
+
+        -- Poner a NULL el atributo UsuarioOracle en la tabla USUARIO
+        UPDATE LIFEFIT.USUARIO
+        SET UsuarioOracle = NULL
+        WHERE ID = P_ID;
+
+        -- Confirmar la transacción
+        COMMIT;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('El usuario con ID ' || P_ID || ' no tiene UsuarioOracle asignado.');
+    END IF;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('No se encontró el usuario con el ID ' || P_ID);
+    WHEN OTHERS THEN
+        -- Manejar cualquier otro error
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Error de transacción: ' || SQLERRM);
+        RAISE;
+END ELIMINA_USER;
+
+
+
+PROCEDURE ELIMINA_CLIENTE(P_ID LIFEFIT.USUARIO.ID%TYPE) AS
+BEGIN
+    -- Eliminar información relacionada
+    DELETE FROM LIFEFIT.CITA WHERE CITA_CLIENTE_ID = P_ID;
+    DELETE FROM LIFEFIT.ENTRENA WHERE ENTRENA_Cliente_ID = P_ID;
+    DELETE FROM LIFEFIT.PLAN WHERE Entrena_cliente_id = P_ID;
+
+    -- Eliminar el UsuarioOracle y el usuario de la tabla USUARIO
+    DECLARE
+        v_UsuarioOracle LIFEFIT.USUARIO.UsuarioOracle%TYPE;
+    BEGIN
+        SELECT UsuarioOracle INTO v_UsuarioOracle FROM LIFEFIT.USUARIO WHERE ID = P_ID;
+        IF v_UsuarioOracle IS NOT NULL THEN
+            EXECUTE IMMEDIATE 'DROP USER ' || v_UsuarioOracle || ' CASCADE';
+        END IF;
+        DELETE FROM LIFEFIT.USUARIO WHERE ID = P_ID;
+    END;
+
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        ROLLBACK;
+        RAISE;
+END ELIMINA_CLIENTE;
+
+
+
+PROCEDURE ELIMINA_GERENTE(P_ID USUARIO.ID%TYPE) AS
+BEGIN
+    -- Eliminar información de gerencia específica
+    DELETE FROM LIFEFIT.GERENTE WHERE ID = P_ID;
+
+    -- Eliminar el UsuarioOracle y el usuario de la tabla USUARIO
+    DECLARE
+        v_UsuarioOracle LIFEFIT.USUARIO.UsuarioOracle%TYPE;
+    BEGIN
+        SELECT UsuarioOracle INTO v_UsuarioOracle FROM LIFEFIT.USUARIO WHERE ID = P_ID;
+        IF v_UsuarioOracle IS NOT NULL THEN
+            EXECUTE IMMEDIATE 'DROP USER ' || v_UsuarioOracle || ' CASCADE';
+        END IF;
+        DELETE FROM LIFEFIT.USUARIO WHERE ID = P_ID;
+    END;
+
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        ROLLBACK;
+        RAISE;
+END ELIMINA_GERENTE;
+
+
+PROCEDURE ELIMINA_ENTRENADOR(P_ID USUARIO.ID%TYPE) AS
+BEGIN
+    -- Eliminar información de entrenamiento específica
+    DELETE FROM LIFEFIT.ENTRENA WHERE Entrenador_ID = P_ID;
+    -- Eliminar el UsuarioOracle y el usuario de la tabla USUARIO
+    DECLARE
+        v_UsuarioOracle LIFEFIT.USUARIO.UsuarioOracle%TYPE;
+    BEGIN
+        SELECT UsuarioOracle INTO v_UsuarioOracle FROM LIFEFIT.USUARIO WHERE ID = P_ID;
+        IF v_UsuarioOracle IS NOT NULL THEN
+            EXECUTE IMMEDIATE 'DROP USER ' || v_UsuarioOracle || ' CASCADE';
+        END IF;
+        DELETE FROM LIFEFIT.USUARIO WHERE ID = P_ID;
+    END;
+
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        ROLLBACK;
+        RAISE;
+END ELIMINA_ENTRENADOR;
+
+
+PROCEDURE ELIMINA_CENTRO(P_ID CENTRO.ID%TYPE) IS
+        v_savepoint_name VARCHAR2(50) := 'SAVEPOINT_ELIMINA_CENTRO';
+    BEGIN
+        -- Nivel 1: Eliminar toda la información del centro
+        DELETE FROM LIFEFIT.CLIENTE WHERE CENTRO_ID = P_ID;
+        DELETE FROM LIFEFIT.ENTRENADOR WHERE CENTRO_ID = P_ID;
+        DELETE FROM LIFEFIT.GERENTE WHERE CENTRO_ID = P_ID;
+
+        SAVEPOINT v_savepoint_name;
+
+        -- Nivel 2 y 3: Eliminar infraestructura del centro y recomponer en caso de error
+        FOR u IN (SELECT ID FROM LIFEFIT.USUARIO WHERE ID = P_ID) LOOP
+            BEGIN
+                -- Llamar al procedimiento para eliminar usuario
+                ELIMINA_USER(u.ID);
+            EXCEPTION
+                WHEN OTHERS THEN
+                    ROLLBACK TO v_savepoint_name;
+                    LLAMADA_ERROR_ELIMINACION('Error al eliminar usuario ' || u.ID || ': ' || SQLERRM);
+                    RETURN;
+            END;
+        END LOOP;
+
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            LLAMADA_ERROR_ELIMINACION('Error al eliminar centro: ' || SQLERRM);
+    END ELIMINA_CENTRO;
+
+END BASE;
+/
+
+
+
+    
